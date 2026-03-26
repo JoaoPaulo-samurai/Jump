@@ -1,0 +1,193 @@
+/* RESET */
+body {
+  margin: 0;
+  background: #111;
+  color: white;
+  text-align: center;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+}
+
+/* 🎮 JOGO */
+#game {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  background: radial-gradient(circle at center, #1a1a2e, #000);
+  overflow: hidden;
+  opacity: 0;
+  transition: 0.5s;
+}
+#game.active {
+  opacity: 1;
+}
+
+/* 🚀 PLAYER */
+#player {
+  width: 80px;
+  height: 80px;
+  position: absolute;
+  background: url('nave.png') no-repeat center/cover;
+
+  transform-origin: center;
+  transition: none;
+}
+
+/* 🪙 MOEDAS */
+.coin {
+  width: 40px;
+  height: 40px;
+  position: absolute;
+  background: url('moeda.png') no-repeat center/cover;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 🎮 JOYSTICK */
+#joystick {
+  display: none;
+  position: fixed;
+  bottom: 30px;
+  left: 30px;
+  width: 120px;
+  height: 120px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 50%;
+  z-index: 20;
+}
+
+#stick {
+  width: 60px;
+  height: 60px;
+  background: rgba(255,255,255,0.4);
+  border-radius: 50%;
+  position: absolute;
+  top: 30px;
+  left: 30px;
+}
+
+@media (max-width: 768px) {
+  #joystick {
+    display: block;
+  }
+}
+
+/* 😱 JUMPSCARE */
+#jumpscare {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: none;
+  z-index: 9999;
+  animation: flash 0.1s infinite;
+}
+
+@keyframes flash {
+  0% { background: black; }
+  50% { background: red; }
+  100% { background: black; }
+}
+
+#jumpscare img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 🔥 RASTRO */
+.particle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: rgb(255, 132, 0);
+  border-radius: 50%;
+  opacity: 0.8;
+  pointer-events: none;
+
+  transform: translate(-50%, -50%);
+  animation: fadeOut 0.5s linear forwards;
+}
+
+@keyframes fadeOut {
+  to {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* 💀 TREMOR */
+.shake {
+  animation: shake 0.1s infinite;
+}
+
+@keyframes shake {
+  0% { transform: translate(2px, 2px); }
+  25% { transform: translate(-2px, -2px); }
+  50% { transform: translate(2px, -2px); }
+  75% { transform: translate(-2px, 2px); }
+  100% { transform: translate(0, 0); }
+}
+
+/* 🎮 MENU INICIAL (UNIFICADO E CORRIGIDO) */
+#startScreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, #000 40%, #020617);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+}
+
+/* 🔥 GARANTE CLIQUE FUNCIONANDO */
+.menu-box {
+  text-align: center;
+  background: rgba(255,255,255,0.05);
+  padding: 40px;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 30px rgba(0,0,0,0.5);
+
+  position: relative;
+  z-index: 100000;
+}
+
+/* 📝 TEXTO */
+.menu-box h1 {
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+
+.menu-box p {
+  opacity: 0.8;
+  margin-bottom: 20px;
+}
+
+/* 🔘 BOTÃO */
+#startBtn {
+  padding: 12px 25px;
+  font-size: 18px;
+  border: none;
+  border-radius: 10px;
+  background: #4f46e5;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s;
+
+  position: relative;
+  z-index: 100001;
+}
+
+#startBtn:hover {
+  background: #6366f1;
+  transform: scale(1.05);
+}
