@@ -165,7 +165,7 @@ document.addEventListener("DOMContentLoaded", () => {
         e.style.top = py + "px";
         e.style.width = "20px";
         e.style.height = "20px";
-        e.style.background = "yellow";
+        e.style.background = " ";
         e.style.borderRadius = "50%";
 
         game.appendChild(e);
