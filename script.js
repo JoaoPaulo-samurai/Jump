@@ -1,273 +1,277 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // ===============================
+  // 📱 DETECTA MOBILE
+  // ===============================
+  const isMobile = window.matchMedia("(max-width: 768px)").matches;
 
-    // ===============================
-    // 🎮 ESTADO
-    // ===============================
-    let audioLiberado = false;
-    let jogoIniciado = false;
+  // ===============================
+  // 🎮 ESTADO
+  // ===============================
+  let audioLiberado = false;
+  let jogoIniciado = false;
+  let dragging = false;
 
-    // ===============================
-    // 🎮 ELEMENTOS
-    // ===============================
-    const player = document.getElementById("player");
-    const game = document.getElementById("game");
-    const contadorEl = document.getElementById("contador");
+  // ===============================
+  // 🎮 ELEMENTOS
+  // ===============================
+  const player = document.getElementById("player");
+  const game = document.getElementById("game");
+  const contadorEl = document.getElementById("contador");
+  const jumpscare = document.getElementById("jumpscare");
+  const som = document.getElementById("som");
+  const bgm = document.getElementById("bgm");
+  const startScreen = document.getElementById("startScreen");
+  const startBtn = document.getElementById("startBtn");
+  const joystick = document.getElementById("joystick");
+  const stick = document.getElementById("stick");
 
-    const jumpscare = document.getElementById("jumpscare");
-    const som = document.getElementById("som");     // jumpscare
-    const bgm = document.getElementById("bgm");     // música
+  // ===============================
+  // 📍 POSIÇÃO E FÍSICA
+  // ===============================
+  let x = 100;
+  let y = 100;
+  let moedas = 0;
+  let velocityX = 0;
+  let velocityY = 0;
+  let currentAngle = 0;
 
-    const startScreen = document.getElementById("startScreen");
-    const startBtn = document.getElementById("startBtn");
+  const playerSize = isMobile ? 60 : 80;
+  const acceleration = isMobile ? 0.25 : 0.35;
+  const friction = 0.92;
+  const maxSpeedMobile = 3.5; // Velocidade máxima no joystick
 
-    // ===============================
-    // 🔒 ESTADO INICIAL
-    // ===============================
-    player.style.display = "none";
-    game.style.opacity = "0";
+  player.style.width = playerSize + "px";
+  player.style.height = playerSize + "px";
+  player.style.display = "none";
+  game.style.opacity = "0";
 
-    // ===============================
-    // 🎮 BOTÃO INICIAR
-    // ===============================
-    startBtn.addEventListener("click", () => {
-
-    console.log("JOGO INICIADO 🚀");
-
+  // ===============================
+  // 🎮 INICIAR JOGO
+  // ===============================
+  startBtn.addEventListener("click", async () => {
     jogoIniciado = true;
-
-    // 🎮 mostrar jogo
     startScreen.style.display = "none";
     player.style.display = "block";
     game.style.opacity = "1";
 
-    // 🪙 criar moedas
-    for (let i = 0; i < 10; i++) criarMoeda();
+    if (game.querySelectorAll(".coin").length === 0) {
+      for (let i = 0; i < 10; i++) criarMoeda();
+    }
 
-    // 🔥 FORÇAR LIBERAÇÃO DE ÁUDIO
-    const unlockAudio = () => {
-        som.muted = true;
-        som.play()
-            .then(() => {
-                som.pause();
-                som.currentTime = 0;
-                som.muted = false;
+    try {
+      await bgm.play();
+      bgm.pause();
+      bgm.currentTime = 0;
+      audioLiberado = true;
+      bgm.volume = 0.3;
+      bgm.play();
+    } catch (err) {
+      console.log("Erro áudio:", err);
+    }
+  });
 
-                audioLiberado = true;
-                console.log("🔊 Áudio liberado");
+  // ===============================
+  // 🎮 TECLADO
+  // ===============================
+  const keys = {
+    w: false,
+    a: false,
+    s: false,
+    d: false,
+    arrowup: false,
+    arrowdown: false,
+    arrowleft: false,
+    arrowright: false,
+  };
 
-                // 🎵 tocar música
-                if (bgm) {
-                    bgm.volume = 0.3;
-                    bgm.play().then(() => {
-                        console.log("🎵 BGM tocando");
-                    }).catch(err => console.log("Erro BGM:", err));
-                }
+  document.addEventListener("keydown", (e) => {
+    const key = e.key.toLowerCase();
+    if (keys.hasOwnProperty(key)) keys[key] = true;
+  });
 
-            })
-            .catch(err => console.log("Erro unlock:", err));
+  document.addEventListener("keyup", (e) => {
+    const key = e.key.toLowerCase();
+    if (keys.hasOwnProperty(key)) keys[key] = false;
+  });
+
+  // ===============================
+  // 🎮 JOYSTICK MOBILE (NORMALIZADO)
+  // ===============================
+  if (joystick && stick) {
+    const handleStart = () => {
+      dragging = true;
+    };
+    const handleEnd = () => {
+      dragging = false;
+      stick.style.transform = "translate(0px, 0px)";
+      velocityX = 0;
+      velocityY = 0;
     };
 
-    unlockAudio();
-});
+    joystick.addEventListener("touchstart", handleStart);
+    window.addEventListener("touchend", handleEnd); // Window para não travar se soltar fora
 
-    // ===============================
-    // 📍 POSIÇÃO
-    // ===============================
-    let x = 100;
-    let y = 100;
-    let moedas = 0;
+    window.addEventListener(
+      "touchmove",
+      (e) => {
+        if (!dragging) return;
 
-    const playerSize = 80;
+        const rect = joystick.getBoundingClientRect();
+        const touch = e.touches[0];
 
-    // ===============================
-    // 🚀 FÍSICA
-    // ===============================
-    let velocityX = 0;
-    let velocityY = 0;
+        // Centro do joystick
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
 
-    const acceleration = 0.5;
-    const friction = 0.95;
+        let dx = touch.clientX - centerX;
+        let dy = touch.clientY - centerY;
 
-    let currentAngle = 0;
+        const maxRadius = 40;
+        const dist = Math.sqrt(dx * dx + dy * dy);
 
-    // ===============================
-    // 🎮 CONTROLES (DIAGONAL OK)
-    // ===============================
-    const keys = {
-        w: false, a: false, s: false, d: false,
-        arrowup: false, arrowdown: false, arrowleft: false, arrowright: false
-    };
+        // Limita visualmente o stick
+        if (dist > maxRadius) {
+          dx = (dx / dist) * maxRadius;
+          dy = (dy / dist) * maxRadius;
+        }
 
-    document.addEventListener("keydown", (e) => {
-        const key = e.key.toLowerCase();
-        if (keys.hasOwnProperty(key)) keys[key] = true;
+        stick.style.transform = `translate(${dx}px, ${dy}px)`;
+
+        // Lógica de velocidade proporcional
+        const intensity = Math.min(dist / maxRadius, 1);
+        const angle = Math.atan2(dy, dx);
+
+        velocityX = Math.cos(angle) * maxSpeedMobile * intensity;
+        velocityY = Math.sin(angle) * maxSpeedMobile * intensity;
+      },
+      { passive: false },
+    );
+  }
+
+  // ===============================
+  // 🛠️ FUNÇÕES DE SUPORTE
+  // ===============================
+  function aplicarLimites() {
+    const w = game.clientWidth;
+    const h = game.clientHeight;
+    if (x < 0) x = 0;
+    if (y < 0) y = 0;
+    if (x > w - playerSize) x = w - playerSize;
+    if (y > h - playerSize) y = h - playerSize;
+  }
+
+  function atualizarPosicao() {
+    player.style.left = x + "px";
+    player.style.top = y + "px";
+  }
+
+  function criarMoeda() {
+    const coin = document.createElement("div");
+    coin.classList.add("coin");
+    const size = isMobile ? 25 : 40;
+    coin.style.width = size + "px";
+    coin.style.height = size + "px";
+    coin.style.left = Math.random() * (game.clientWidth - size) + "px";
+    coin.style.top = Math.random() * (game.clientHeight - size) + "px";
+    game.appendChild(coin);
+  }
+
+  function criarRastro() {
+    const p = document.createElement("div");
+    p.classList.add("particle");
+    p.style.left = x + playerSize / 2 + "px";
+    p.style.top = y + playerSize / 2 + "px";
+    game.appendChild(p);
+    setTimeout(() => p.remove(), 500);
+  }
+
+  function verificarColisao() {
+    document.querySelectorAll(".coin").forEach((coin) => {
+      const c = coin.getBoundingClientRect();
+      const p = player.getBoundingClientRect();
+      if (
+        p.left < c.right &&
+        p.right > c.left &&
+        p.top < c.bottom &&
+        p.bottom > c.top
+      ) {
+        coin.remove();
+        moedas++;
+        contadorEl.innerText = moedas;
+        if (moedas === 6) ativarJumpscare();
+      }
     });
+  }
 
-    document.addEventListener("keyup", (e) => {
-        const key = e.key.toLowerCase();
-        if (keys.hasOwnProperty(key)) keys[key] = false;
-    });
+  // ===============================
+  // 💀 JUMPSCARE (COM VOLUME E DURAÇÃO)
+  // ===============================
+  function ativarJumpscare() {
+    jumpscare.style.display = "block";
 
-    // ===============================
-    // 🔒 LIMITES
-    // ===============================
-    function aplicarLimites() {
-        const w = game.clientWidth;
-        const h = game.clientHeight;
-
-        if (x < 0) x = 0;
-        if (y < 0) y = 0;
-        if (x > w - playerSize) x = w - playerSize;
-        if (y > h - playerSize) y = h - playerSize;
+    if (bgm) {
+      bgm.pause();
+      bgm.currentTime = 0;
     }
 
-    function atualizarPosicao() {
-        player.style.left = x + "px";
-        player.style.top = y + "px";
+    if (audioLiberado && som) {
+      // 🔊 AJUSTE DE VOLUME (0.0 a 1.0)
+      // 0.5 é 50% do volume original
+      som.volume = 0.3;
+
+      som.currentTime = 0;
+      som.play().catch(() => {});
+
+      // 🕒 AJUSTE DE DURAÇÃO (em milissegundos)
+      // 1500 = 1.5 segundos. Depois disso, o som para.
+      setTimeout(() => {
+        som.pause();
+        som.currentTime = 0; // Reseta para o início
+      }, 1500);
     }
 
-    // ===============================
-    // 🪙 MOEDAS
-    // ===============================
-    function criarMoeda() {
-        const coin = document.createElement("div");
-        coin.classList.add("coin");
+    document.body.classList.add("shake");
+    setTimeout(() => {
+      document.body.classList.remove("shake");
+    }, 1000);
+  }
 
-        coin.style.left = Math.random() * (game.clientWidth - 40) + "px";
-        coin.style.top = Math.random() * (game.clientHeight - 40) + "px";
+  // ===============================
+  // 🔄 LOOP PRINCIPAL
+  // ===============================
+  function gameLoop() {
+    if (jogoIniciado) {
+      if (!dragging) {
+        if (keys.w || keys.arrowup) velocityY -= acceleration;
+        if (keys.s || keys.arrowdown) velocityY += acceleration;
+        if (keys.a || keys.arrowleft) velocityX -= acceleration;
+        if (keys.d || keys.arrowright) velocityX += acceleration;
+        velocityX *= friction;
+        velocityY *= friction;
+      }
 
-        game.appendChild(coin);
+      x += velocityX;
+      y += velocityY;
+
+      const speed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+      if (speed > 0.5) {
+        criarRastro();
+        const targetAngle =
+          Math.atan2(velocityY, velocityX) * (180 / Math.PI) + 90;
+        let diff = targetAngle - currentAngle;
+        while (diff > 180) diff -= 360;
+        while (diff < -180) diff += 360;
+        currentAngle += diff * 0.2;
+        player.style.transform = `rotate(${currentAngle}deg)`;
+      }
+
+      aplicarLimites();
+      atualizarPosicao();
+      verificarColisao();
     }
+    requestAnimationFrame(gameLoop);
+  }
 
-    // ===============================
-    // 🔥 RASTRO DA NAVE
-    // ===============================
-    function criarRastro() {
-        const p = document.createElement("div");
-        p.classList.add("particle");
-
-        p.style.left = (x + playerSize / 2) + "px";
-        p.style.top = (y + playerSize / 2) + "px";
-
-        game.appendChild(p);
-
-        setTimeout(() => p.remove(), 500);
-    }
-
-    // ===============================
-    // 💥 EFEITO MOEDA
-    // ===============================
-    function efeitoMoeda(px, py) {
-        const e = document.createElement("div");
-
-        e.style.position = "absolute";
-        e.style.left = px + "px";
-        e.style.top = py + "px";
-        e.style.width = "20px";
-        e.style.height = "20px";
-        e.style.background = " ";
-        e.style.borderRadius = "50%";
-
-        game.appendChild(e);
-
-        setTimeout(() => {
-            e.style.transform = "scale(3)";
-            e.style.opacity = "0";
-        }, 10);
-
-        setTimeout(() => e.remove(), 500);
-    }
-
-    // ===============================
-    // 🪙 COLISÃO
-    // ===============================
-    function verificarColisao() {
-        document.querySelectorAll(".coin").forEach((coin) => {
-            const c = coin.getBoundingClientRect();
-            const p = player.getBoundingClientRect();
-
-            if (
-                p.left < c.right &&
-                p.right > c.left &&
-                p.top < c.bottom &&
-                p.bottom > c.top
-            ) {
-                efeitoMoeda(p.left, p.top);
-                coin.remove();
-                moedas++;
-                contadorEl.innerText = moedas;
-
-                if (moedas === 6) ativarJumpscare();
-            }
-        });
-    }
-
-    // ===============================
-    // 💀 JUMPSCARE + SOM + TREMOR
-    // ===============================
-    function ativarJumpscare() {
-
-        jumpscare.style.display = "block";
-
-        // 🔇 parar música
-        if (bgm) {
-            bgm.pause();
-            bgm.currentTime = 0;
-        }
-
-        // 🔊 som jumpscare
-        if (audioLiberado) {
-            som.currentTime = 0;
-            som.volume = 1;
-            som.play().catch(() => {});
-        }
-
-        // 💥 tremor
-        document.body.classList.add("shake");
-        setTimeout(() => {
-            document.body.classList.remove("shake");
-        }, 1000);
-    }
-
-    // ===============================
-    // 🔄 GAME LOOP
-    // ===============================
-    function gameLoop() {
-
-        if (jogoIniciado) {
-
-            // movimento
-            if (keys.w || keys.arrowup) velocityY -= acceleration;
-            if (keys.s || keys.arrowdown) velocityY += acceleration;
-            if (keys.a || keys.arrowleft) velocityX -= acceleration;
-            if (keys.d || keys.arrowright) velocityX += acceleration;
-
-            // atrito
-            velocityX *= friction;
-            velocityY *= friction;
-
-            x += velocityX;
-            y += velocityY;
-
-            // 🔥 rastro ativo
-            if (Math.abs(velocityX) > 0.5 || Math.abs(velocityY) > 0.5) {
-                criarRastro();
-            }
-
-            // rotação
-            if (velocityX !== 0 || velocityY !== 0) {
-                const target = Math.atan2(velocityY, velocityX) * (180 / Math.PI) + 90;
-                currentAngle += (target - currentAngle) * 0.2;
-                player.style.transform = `rotate(${currentAngle}deg)`;
-            }
-
-            aplicarLimites();
-            atualizarPosicao();
-            verificarColisao();
-        }
-
-        requestAnimationFrame(gameLoop);
-    }
-
-    gameLoop();
+  // Inicia o loop
+  gameLoop();
 });

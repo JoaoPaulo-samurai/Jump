@@ -27,7 +27,7 @@ body {
   width: 80px;
   height: 80px;
   position: absolute;
-  background: url('nave.png') no-repeat center/cover;
+  background: url("nave.png") no-repeat center/cover;
 
   transform-origin: center;
   transition: none;
@@ -38,13 +38,17 @@ body {
   width: 40px;
   height: 40px;
   position: absolute;
-  background: url('moeda.png') no-repeat center/cover;
+  background: url("moeda.png") no-repeat center/cover;
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* 🎮 JOYSTICK */
@@ -55,7 +59,7 @@ body {
   left: 30px;
   width: 120px;
   height: 120px;
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 50%;
   z-index: 20;
 }
@@ -63,11 +67,12 @@ body {
 #stick {
   width: 60px;
   height: 60px;
-  background: rgba(255,255,255,0.4);
+  background: rgba(255, 255, 255, 0.4);
   border-radius: 50%;
   position: absolute;
   top: 30px;
   left: 30px;
+  touch-action: none; /* 🔥 ESSENCIAL */
 }
 
 @media (max-width: 768px) {
@@ -89,9 +94,15 @@ body {
 }
 
 @keyframes flash {
-  0% { background: black; }
-  50% { background: red; }
-  100% { background: black; }
+  0% {
+    background: black;
+  }
+  50% {
+    background: red;
+  }
+  100% {
+    background: black;
+  }
 }
 
 #jumpscare img {
@@ -127,11 +138,21 @@ body {
 }
 
 @keyframes shake {
-  0% { transform: translate(2px, 2px); }
-  25% { transform: translate(-2px, -2px); }
-  50% { transform: translate(2px, -2px); }
-  75% { transform: translate(-2px, 2px); }
-  100% { transform: translate(0, 0); }
+  0% {
+    transform: translate(2px, 2px);
+  }
+  25% {
+    transform: translate(-2px, -2px);
+  }
+  50% {
+    transform: translate(2px, -2px);
+  }
+  75% {
+    transform: translate(-2px, 2px);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
 }
 
 /* 🎮 MENU INICIAL (UNIFICADO E CORRIGIDO) */
@@ -151,11 +172,11 @@ body {
 /* 🔥 GARANTE CLIQUE FUNCIONANDO */
 .menu-box {
   text-align: center;
-  background: rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.05);
   padding: 40px;
   border-radius: 20px;
   backdrop-filter: blur(10px);
-  box-shadow: 0 0 30px rgba(0,0,0,0.5);
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
 
   position: relative;
   z-index: 100000;
@@ -190,4 +211,28 @@ body {
 #startBtn:hover {
   background: #6366f1;
   transform: scale(1.05);
+}
+/* 📱 MOBILE AJUSTES */
+@media (max-width: 768px) {
+  #player {
+    width: 60px;
+    height: 60px;
+  }
+
+  .coin {
+    width: 25px;
+    height: 25px;
+  }
+
+  #hud h1 {
+    font-size: 18px;
+  }
+
+  .menu-box h1 {
+    font-size: 28px;
+  }
+
+  .menu-box {
+    padding: 25px;
+  }
 }
